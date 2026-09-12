@@ -8,6 +8,13 @@ impl SearchOptions {
     pub fn defaults() -> SearchOptions {
         SearchOptions { case_sensitive: true, by_words: false, replace_by: None }
     }
+
+    pub fn get_phrase<'a>(&'a self, phrase: &str) -> String {
+        match self.case_sensitive {
+            true => phrase.to_owned(),
+            false => phrase.to_lowercase()
+        }
+    }
 }
 pub struct Config<'a> {
     query: &'a String,
