@@ -149,10 +149,10 @@ mod test {
         let matches = GiMatches::findall(query, contents, &SearchOptions::defaults());
         // using different kinds of asserts
         assert_eq!(matches.count(), 1);
-        assert!(line_numbers == [1]);
-        assert_ne!(lines.len(), 0);
-        assert_eq!(lines[0].trim(), "safe, fast, productive.");
-        assert!(lines.len() == 1)
+        assert!(matches.line_numbers() == [1]);
+        assert_ne!(matches.lines().len(), 0);
+        assert_eq!(matches.lines()[0].trim(), "safe, fast, productive.");
+        assert!(matches.lines().len() == 1)
     }
 
     #[test]
