@@ -3,3 +3,4 @@
 # multi file grep
 # write remaining errors to ioerr
 # multi word (separate) grep
+# Colored visualization.

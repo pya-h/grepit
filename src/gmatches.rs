@@ -1,3 +1,5 @@
+use std::io;
+
 use regex::Regex;
 
 use crate::config;
@@ -6,6 +8,7 @@ pub struct SingleMatch {
     pub line: String,
     pub line_number: usize,
     pub position: usize,
+    pub replacement: Option<String>,
 }
 
 impl SingleMatch {
@@ -14,25 +17,50 @@ impl SingleMatch {
             line: line,
             line_number,
             position,
+            replacement: None,
         }
     }
 
+    pub fn new_replaced(
+        line: String,
+        line_number: usize,
+        position: usize,
+        replacement: String,
+    ) -> Self {
+        SingleMatch {
+            line: line,
+            line_number,
+            position,
+            replacement: Some(replacement),
+        }
+    }
+
+    pub fn replace(&mut self, replacement: String) {
+        self.replacement = Some(replacement);
+    }
+
     pub fn to_string(&self) -> String {
-        format!("[{}, {}] {}", self.line_number, self.position, self.line)
+        format!(
+            "[{}, {}] {}{}",
+            self.line_number,
+            self.position,
+            self.line,
+            if let Some(rp) = &self.replacement {
+                format!(" -> {}", rp)
+            } else {
+                String::new()
+            }
+        )
     }
 }
 
 pub struct GiMatches {
     pub items: Vec<SingleMatch>,
-    pub replacements: Option<Vec<String>>,
 }
 
 impl GiMatches {
     pub fn new() -> Self {
-        GiMatches {
-            items: Vec::new(),
-            replacements: None,
-        }
+        GiMatches { items: Vec::new() }
     }
 
     pub fn next(&mut self, line: &str, line_number: usize, position: usize) -> &SingleMatch {
@@ -116,6 +144,18 @@ impl GiMatches {
         results
     }
 
+    pub fn set_latest_replacement(&mut self, replacement: String) -> Result<(), io::Error> {
+        let last_index = self.count();
+        if last_index == 0 {
+            return Err(io::Error::new(
+                io::ErrorKind::NotFound,
+                "There is no match to set replacement of!",
+            ));
+        }
+        self.items[last_index - 1].replace(replacement);
+        Ok(())
+    }
+
     pub fn report(&self) -> Vec<String> {
         self.items.iter().map(|it| it.to_string()).collect()
     }
@@ -127,17 +167,20 @@ impl GiMatches {
     pub fn lines(&self) -> Vec<&String> {
         self.items.iter().map(|it| &it.line).collect()
     }
-    
+
     pub fn zip(&self) -> Vec<(usize, &String)> {
-        self.items.iter().map(|it| it.line_number).zip(self.items.iter().map(|it| &it.line)).collect()
+        self.items
+            .iter()
+            .map(|it| it.line_number)
+            .zip(self.items.iter().map(|it| &it.line))
+            .collect()
     }
 }
 
-
 #[cfg(test)]
 mod test {
-    use crate::config::SearchOptions;
     use super::GiMatches;
+    use crate::config::SearchOptions;
 
     #[test]
     fn search_specific_line() {
