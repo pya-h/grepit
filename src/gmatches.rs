@@ -1,6 +1,6 @@
 use std::io;
 
-use regex::Regex;
+use regex::{Regex, RegexBuilder};
 
 use crate::config;
 
@@ -99,6 +99,12 @@ impl GiMatches {
         if query.trim().len() == 0 {
             panic!("Empty query string provided!")
         }
+
+        let re = RegexBuilder::new(query)
+            .case_insensitive(!&options.case_sensitive)
+            .build()
+            .expect("It seems the replacement logic is having troubles!");
+
         let query = &options.get_phrase(query); // prevent query being lowered on each loop step
         let query_words_extracted = if options.by_words {
             let words = GiMatches::extract_words(query);
@@ -128,6 +134,7 @@ impl GiMatches {
                     } else {
                         None
                     }
+                    // TODO: the word by word replacement should handled here...
                 }
                 _ => match options.case_sensitive {
                     true => line.find(query),
@@ -136,6 +143,16 @@ impl GiMatches {
             };
             if let Some(position) = matched {
                 results.next(&line, line_number, position);
+                if let Some(replace_by) = &options.replace_by {
+                    if let Err(err) =
+                        results.set_latest_replacement(re.replace_all(line, replace_by).to_string())
+                    {
+                        println!(
+                            "WARN! Replacement of line#{} failed; Reason: {}",
+                            line_number, err
+                        );
+                    }
+                }
             }
         }
         if results.is_empty() {
