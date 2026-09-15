@@ -1,6 +1,6 @@
 use std::io;
 
-use regex::{Regex, RegexBuilder};
+use regex::{Captures, Regex, RegexBuilder};
 
 use crate::config;
 
@@ -144,8 +144,47 @@ impl GiMatches {
             if let Some(position) = matched {
                 results.next(&line, line_number, position);
                 if let Some(replace_by) = &options.replace_by {
-                    if let Err(err) =
-                        results.set_latest_replacement(re.replace_all(line, replace_by).to_string())
+                    let possible_new_line = match query_words_extracted {
+                        Some((q_count, _)) => {
+                            let replace_by_words = GiMatches::extract_words(replace_by.as_str());
+                            if replace_by_words.len() > q_count {
+                                println!(
+                                    "WARN! Replacement of line#{} failed; In word-by-word replacement, the new phrase can not have more words than the original phrase!",
+                                    line_number
+                                );
+                                None
+                            } else {
+                                match Regex::new(r"\w+") {
+                                    Ok(re) => {
+                                        let mut i = 0;
+                                        let mut replacing_words = replace_by_words.iter();
+                                        let new_line = re.replace_all(line, |caps: &Captures| {
+                                            i += 1;
+                                            if i > position {
+                                                replacing_words
+                                                .next()
+                                                .map(|word| word.to_string())
+                                                .unwrap_or_else(|| caps[0].to_string())
+                                            } else {
+                                                caps[0].to_string()
+                                            }
+                                        });
+                                        Some(new_line.to_string())
+                                    }
+                                    Err(err) => {
+                                        println!(
+                                            "WARN! Replacement of line#{} failed; Reason: {}",
+                                            line_number, err
+                                        );
+                                        None
+                                    }
+                                }
+                            }
+                        }
+                        _ => Some(re.replace_all(line, replace_by).to_string()),
+                    };
+                    if let Some(new_line) = possible_new_line
+                        && let Err(err) = results.set_latest_replacement(new_line)
                     {
                         println!(
                             "WARN! Replacement of line#{} failed; Reason: {}",

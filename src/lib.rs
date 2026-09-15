@@ -9,7 +9,7 @@ pub fn run(cfg: config::Config) -> Result<(), Box<dyn Error>> {
     let mut file = File::open(cfg.filename())?;
     let mut contents = String::new();
     file.read_to_string(&mut contents)?;
-    println!("File successfully read:\n\t{}\n", contents);
+    println!("File successfully read:\n{}\n", contents);
     let matches = GiMatches::findall(&cfg.query(), &contents, cfg.options());
     println!("{:?}", matches.report());
     Ok(())

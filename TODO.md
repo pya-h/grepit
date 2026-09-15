@@ -5,3 +5,4 @@
 # multi word (separate) grep
 # Colored visualization.
 # Multiple positions for multiple occurance ina line.
+# Refine error handling throughout the codebase

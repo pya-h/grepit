@@ -6,13 +6,17 @@ pub struct SearchOptions {
 
 impl SearchOptions {
     pub fn defaults() -> SearchOptions {
-        SearchOptions { case_sensitive: true, by_words: false, replace_by: None }
+        SearchOptions {
+            case_sensitive: true,
+            by_words: false,
+            replace_by: None,
+        }
     }
 
     pub fn get_phrase<'a>(&'a self, phrase: &str) -> String {
         match self.case_sensitive {
             true => phrase.to_owned(),
-            false => phrase.to_lowercase()
+            false => phrase.to_lowercase(),
         }
     }
 }
@@ -29,20 +33,34 @@ impl<'a> Config<'a> {
         }
         let mut options = SearchOptions::defaults();
         let args_count = args.len();
-        for i in 3..args_count {
+        let mut i = 2;
+        while {
+            i += 1;
+            i
+        } < args_count
+        {
             match args[i].as_str() {
-                "-i" => { options.case_sensitive = false; },
-                "+w" => { options.by_words = true; },
-                "+i" => { options.case_sensitive = true; },
-                "-w" => { options.by_words = false; },
+                "-i" => {
+                    options.case_sensitive = false;
+                }
+                "+w" => {
+                    options.by_words = true;
+                }
+                "+i" => {
+                    options.case_sensitive = true;
+                }
+                "-w" => {
+                    options.by_words = false;
+                }
                 "-r" => {
                     if i == args_count - 1 {
-                        eprintln!("Invalid argument: Replace By option needs a second parameter: the replacement string!");
+                        return Err("Invalid argument: Replace By option needs a second parameter: the replacement string!".to_owned());
                     }
-                    options.replace_by = Some(args[i+1].clone())
+                    options.replace_by = Some(args[i + 1].clone());
+                    i += 1;
                 }
-                _ => { 
-                    eprintln!("Invalid argument: {}", args[i]);
+                _ => {
+                    return Err(format!("Invalid argument: {}", args[i]));
                 }
             }
         }
