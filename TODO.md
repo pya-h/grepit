@@ -6,3 +6,5 @@
 # Colored visualization.
 # Multiple positions for multiple occurance ina line.
 # Refine error handling throughout the codebase
+# WordByWord Replacement when replace-by has less words than query: The remaining matched words will not change => 
+#   Define a new mode to handle that case.
