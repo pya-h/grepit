@@ -8,3 +8,4 @@
 # Refine error handling throughout the codebase
 # WordByWord Replacement when replace-by has less words than query: The remaining matched words will not change => 
 #   Define a new mode to handle that case.
+# Handle very large files case: they need line by line read and write from or to files.
