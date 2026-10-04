@@ -93,9 +93,9 @@ impl GiMatches {
         options: &config::SearchOptions,
     ) -> GiMatches {
         let mut results = GiMatches::new();
-        if contents.trim().len() == 0 {
-            panic!("No contents to search!");
-        }
+        // if contents.trim().len() == 0 {
+        //     panic!("No contents to search!");
+        // } // TODO: This should only be checked when only one file is greped
         if query.trim().len() == 0 {
             panic!("Empty query string provided!")
         }
@@ -194,9 +194,9 @@ impl GiMatches {
                 }
             }
         }
-        if results.is_empty() {
-            panic!("No match found!");
-        }
+        // if results.is_empty() {
+        //     panic!("No match found!");
+        // } // TODO: This should only be checked when only one file is greped
         results
     }
 

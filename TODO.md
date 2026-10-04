@@ -1,6 +1,8 @@
+# ** Multi file grep Is added, but it needs Full Error handling **
+# Also allow folder params, such as recursive search, shallow search, etc
+
 # grep on special match count
 # grep on lines with special formula or spec.
-# multi file grep
 # write remaining errors to ioerr
 # multi word (separate) grep
 # Colored visualization.
@@ -9,3 +11,4 @@
 # WordByWord Replacement when replace-by has less words than query: The remaining matched words will not change => 
 #   Define a new mode to handle that case.
 # Handle very large files case: they need line by line read and write from or to files.
+# Make results colored, esp the matches
