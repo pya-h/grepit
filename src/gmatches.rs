@@ -91,11 +91,19 @@ impl GiMatches {
         query: &str,
         contents: &'a str,
         options: &config::SearchOptions,
-    ) -> GiMatches {
+        throw_on_nothing: bool,
+    ) -> Result<GiMatches, io::Error> {
         let mut results = GiMatches::new();
-        // if contents.trim().len() == 0 {
-        //     panic!("No contents to search!");
-        // } // TODO: This should only be checked when only one file is greped
+        if contents.trim().len() == 0 {
+            return if throw_on_nothing {
+                Err(io::Error::new(
+                    io::ErrorKind::NotFound,
+                    "File is empty!".to_owned(),
+                ))
+            } else {
+                Ok(results)
+            };
+        }
         if query.trim().len() == 0 {
             panic!("Empty query string provided!")
         }
@@ -134,7 +142,6 @@ impl GiMatches {
                     } else {
                         None
                     }
-                    // TODO: the word by word replacement should handled here...
                 }
                 _ => match options.case_sensitive {
                     true => line.find(query),
@@ -162,9 +169,9 @@ impl GiMatches {
                                             i += 1;
                                             if i > position {
                                                 replacing_words
-                                                .next()
-                                                .map(|word| word.to_string())
-                                                .unwrap_or_else(|| caps[0].to_string())
+                                                    .next()
+                                                    .map(|word| word.to_string())
+                                                    .unwrap_or_else(|| caps[0].to_string())
                                             } else {
                                                 caps[0].to_string()
                                             }
@@ -194,10 +201,14 @@ impl GiMatches {
                 }
             }
         }
-        // if results.is_empty() {
-        //     panic!("No match found!");
-        // } // TODO: This should only be checked when only one file is greped
-        results
+        if results.is_empty() && throw_on_nothing {
+            Err(io::Error::new(
+                io::ErrorKind::NotFound,
+                "No match found!".to_owned(),
+            ))
+        } else {
+            Ok(results)
+        }
     }
 
     pub fn set_latest_replacement(&mut self, replacement: String) -> Result<(), io::Error> {
@@ -245,7 +256,9 @@ mod test {
         Rust:
             safe, fast, productive.
             Pick three.";
-        let matches = GiMatches::findall(query, contents, &SearchOptions::defaults());
+        let matches = GiMatches::findall(query, contents, &SearchOptions::defaults(), true);
+        assert!(matches.is_ok());
+        let matches = matches.unwrap();
         // using different kinds of asserts
         assert_eq!(matches.count(), 1);
         assert!(matches.line_numbers() == [1]);
@@ -257,18 +270,24 @@ mod test {
     #[test]
     #[should_panic(expected = "No match found!")]
     fn search_not_found() {
-        GiMatches::findall("X", "ABCDEFG", &SearchOptions::defaults());
+        if let Err(err) = GiMatches::findall("X", "ABCDEFG", &SearchOptions::defaults(), true) {
+            panic!("{}", err)
+        }
     }
 
     #[test]
-    #[should_panic(expected = "No contents to search!")]
+    #[should_panic(expected = "File is empty!")]
     fn search_no_contents() {
-        GiMatches::findall("S", "", &SearchOptions::defaults());
+        if let Err(err) = GiMatches::findall("S", "", &SearchOptions::defaults(), true) {
+            panic!("{}", err)
+        }
     }
 
     #[test]
     #[should_panic(expected = "Empty query string")]
     fn search_empty_query() {
-        GiMatches::findall("", "Text", &SearchOptions::defaults());
+        if let Err(err) = GiMatches::findall("", "Text", &SearchOptions::defaults(), true) {
+            panic!("{}", err)
+        }
     }
 }
